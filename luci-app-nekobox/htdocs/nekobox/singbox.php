@@ -3,7 +3,7 @@ ob_start();
 include './cfg.php';
 date_default_timezone_set('Asia/Shanghai');
 
-$dataFilePath = '/tmp/subscription_data.txt';
+$dataFilePath = '/etc/neko/subscription_data.txt';
 $lastSubscribeUrl = '';
 
 if (file_exists($dataFilePath)) {
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['setCron'])) {
 
 <?php
 $shellScriptPath = '/etc/neko/core/update_subscription.sh';
-$DATA_FILE = '/tmp/subscription_data.txt'; 
+$DATA_FILE = '/etc/neko/subscription_data.txt'; 
 $LOG_FILE = '/tmp/update_subscription.log'; 
 $SUBSCRIBE_URL = '';
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $shellScriptContent = <<<EOL
 #!/bin/sh
 
-DATA_FILE="/tmp/subscription_data.txt"
+DATA_FILE="/etc/neko/subscription_data.txt"
 CONFIG_DIR="/etc/neko/config"
 LOG_FILE="/tmp/update_subscription.log"
 TEMPLATE_URL="https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json"
@@ -148,10 +148,9 @@ EOL;
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 Mihomo</a>
-        <a href="./singbox_manager.php" class="col btn btn-lg">🗂️ Sing-box</a>
-        <a href="./box.php" class="col btn btn-lg">💹 订阅转换</a>
-        <a href="./filekit.php" class="col btn btn-lg">📦 文件助手</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 文件管理</a>
+        <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
+        <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
 <div class="outer-container">
     <div class="container">
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板</h1>
@@ -266,7 +265,7 @@ EOL;
           </div>
         </div>
         <?php
-        $dataFilePath = '/tmp/subscription_data.txt';
+        $dataFilePath = '/etc/neko/subscription_data.txt';
         $configFilePath = '/etc/neko/config/sing-box.json';
         $downloadedContent = ''; 
 
@@ -314,7 +313,7 @@ EOL;
             }
 
             $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}&file={$templateUrlEncoded}";
-            $tempFilePath = '/tmp/' . $customFileName;
+            $tempFilePath = '/etc/neko/' . $customFileName;
             $logMessages = [];
             $command = "wget -O " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
             exec($command, $output, $returnVar);
