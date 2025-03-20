@@ -1,6 +1,6 @@
 <?php include './language.php'; ?>
 <html lang="<?php echo $currentLang; ?>">
-<div class="modal fade" id="langModal" tabindex="-1" aria-labelledby="langModalLabel" aria-hidden="true">
+<div class="modal fade" id="langModal" tabindex="-1" aria-labelledby="langModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -30,45 +30,63 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   interact('.modal-dialog.draggable').draggable({
     allowFrom: '.modal-header',
-    modifiers: [
-      interact.modifiers.restrictRect({
-        restriction: 'parent',
-        endOnly: true
-      })
-    ],
-    listeners: {
-      start: function(event) {
-        event.target.style.transition = 'none';
-        event.target.classList.add('dragging');
-      },
-      move: function(event) {
-        const target = event.target;
-        const x = (parseFloat(target.style.left) || 0) + event.dx;
-        const y = (parseFloat(target.style.top) || 0) + event.dy;
-        
-        target.style.left = `${x}px`;
-        target.style.top = `${y}px`;
-      },
-      end: function(event) {
-        event.target.style.transition = '';
-        event.target.classList.remove('dragging');
+      modifiers: [
+        interact.modifiers.restrictRect({
+          restriction: 'parent', 
+          endOnly: true
+        })
+      ],
+      listeners: {
+        start(event) {
+          event.target.style.transition = 'none';
+          event.target.classList.add('dragging');
+        },
+        move(event) {
+          const target = event.target;
+          const x = (parseFloat(target.style.left) || 0) + event.dx;
+          const y = (parseFloat(target.style.top) || 0) + event.dy;
+
+          target.style.position = 'absolute';
+          target.style.left = `${x}px`;
+          target.style.top = `${y}px`;
+        },
+        end(event) {
+          event.target.style.transition = '';
+          event.target.classList.remove('dragging');
+        }
       }
-    }
-  });
+    })
+    .resizable({
+      edges: { right: true, bottom: true, left: true }, 
+      listeners: {
+        move(event) {
+          let { x, y } = event.target.dataset;
+          x = (parseFloat(x) || 0) + event.deltaRect.left;
+          y = (parseFloat(y) || 0) + event.deltaRect.top;
+
+          Object.assign(event.target.style, {
+            width: `${event.rect.width}px`,
+            height: `${event.rect.height}px`, 
+            transform: `translate(${x}px, ${y}px)`
+          });
+
+          Object.assign(event.target.dataset, { x, y });
+        }
+      }
+    });
 
   document.querySelectorAll('.modal').forEach(modal => {
     const dialog = modal.querySelector('.modal-dialog');
     dialog.classList.add('draggable');
 
-    const originalWidth = dialog.style.width;
-    const originalMaxWidth = dialog.style.maxWidth;
-    
     modal.addEventListener('show.bs.modal', () => {
-      dialog.style.width = originalWidth;
-      dialog.style.maxWidth = originalMaxWidth;
+      dialog.style.width = '';
+      dialog.style.maxWidth = '';
+      dialog.style.left = ''; 
+      dialog.style.top = ''; 
     });
   });
 });
@@ -633,6 +651,16 @@ $lang = $_GET['lang'] ?? 'en';
     </div>
 <?php endif; ?>
 <style>
+    .modal-dialog.draggable {
+      resize: both;
+      overflow: hidden;
+    }
+
+    .modal-content {
+      min-height: 0 !important; 
+      height: 100%; 
+    }
+
     #leafletMap {
         width: 100%;
         height: 400px;
@@ -1469,7 +1497,7 @@ let IP = {
 
         const modalHTML = `
             <div class="modal fade custom-modal" id="ipDetailModal" tabindex="-1" role="dialog" aria-labelledby="ipDetailModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-                <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+                <div class="modal-dialog modal-xl draggable" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="ipDetailModalLabel">${translations['ip_info']}</h5>
@@ -4759,6 +4787,10 @@ function speakMessage(message) {
             <input class="form-check-input" type="checkbox" id="bodyBackground">
             <label class="form-check-label" for="bodyBackground" data-translate="transparent_body">Enable transparent body background</label>
         </div>
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="openwrtTheme" />
+            <label class="form-check-label" for="openwrtTheme" data-translate="enable_openwrt_theme">Enable OpenWRT Theme Compatibility</label>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close">Close</button>
@@ -4775,9 +4807,10 @@ const modalWidthValue = document.getElementById("modalWidthValue");
 
 const group1Checkbox = document.getElementById("group1Background");
 const bodyBackgroundCheckbox = document.getElementById("bodyBackground");
+const openwrtThemeCheckbox = document.getElementById("openwrtTheme");
 
 function updateSliderColor(value, slider, valueElement) {
-    let red = Math.min(Math.max((value - 800) / (2400 - 800) * 255, 0), 255);
+    let red = Math.min(Math.max((value - 800) / (5400 - 800) * 255, 0), 255);
     let green = 255 - red;
     
     slider.style.background = `linear-gradient(to right, rgb(${red}, ${green}, 255), rgb(${255 - red}, ${green}, ${255 - red}))`;
@@ -4815,6 +4848,11 @@ modalSlider.oninput = function() {
     showNotification(translations['modal_width_updated'].replace('%s', modalSlider.value));
 };
 
+openwrtThemeCheckbox.onchange = function () {
+    sendCSSUpdate(); 
+    showNotification(openwrtThemeCheckbox.checked ? 'OpenWRT theme enabled' : 'OpenWRT theme disabled');
+};
+
 function sendCSSUpdate() {
     const width = slider.value;
     const modalWidth = modalSlider.value;
@@ -4830,7 +4868,8 @@ function sendCSSUpdate() {
             width: width,
             modalWidth: modalWidth,
             group1: group1,
-            bodyBackground: bodyBackground
+            bodyBackground: bodyBackground,
+            openwrtTheme: openwrtThemeCheckbox.checked ? 1 : 0 
         })
     }).then(response => response.json())
       .then(data => console.log('CSS 更新成功:', data))
